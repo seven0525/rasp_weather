@@ -9,7 +9,7 @@ from google.auth.transport.requests import Request
 import requests
 import json
 
-# その日外出する時間帯の最高気温と、その時間帯に雨が降るか判断
+# その日外出する時間帯（start -> end）の最高気温と、その時間帯に雨が降るか判断
 def get_weather(start,end):
     rain = False
     temps = []
@@ -24,7 +24,8 @@ def get_weather(start,end):
         forecastDatetime = timezone('Asia/Tokyo').localize(datetime.datetime.fromtimestamp(item['dt']))
         weatherDescription = item['weather'][0]['description']
         temperature = item['main']['temp']
-        if forecastDatetime.day == 11:
+        #今日の東京の天気のうち外出中の天気情報のみ(雨が降るか/最高気温)を取得
+        if datetime.date.today().day == forecastDatetime.day:
             if forecastDatetime.hour >= start and forecastDatetime.hour <= end:
                 if "雨" in weatherDescription:
                     rain = True
@@ -33,7 +34,7 @@ def get_weather(start,end):
 
 
 
-# その日の外出時間帯と、面接ありorオフィシャルありorカジュアルかを判断
+# その日の外出時間帯と、スーツ用事ありorおしゃれ用事ありorカジュアルかを判断
 def get_calender():
     SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
     creds = None
@@ -53,7 +54,7 @@ def get_calender():
 
     service = build('calendar', 'v3', credentials=creds)
 
-    # Call the Calendar API
+    # その日の外出時間を判断
     start_time = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0).isoformat()
     start_time = start_time + ".000000+09:00"
     end_time = datetime.datetime.now().replace(hour=23,minute=59,second=59,microsecond=0).isoformat()
@@ -74,6 +75,7 @@ def get_calender():
         start = datetime.datetime.strptime(start, '%Y-%m-%dT%H:%M:%S+09:00')
         end = event['end'].get('dateTime', event['end'].get('date'))
         end = datetime.datetime.strptime(end, '%Y-%m-%dT%H:%M:%S+09:00')
+        # カレンダーのイベントの色を元に用事の種類を判断
         if 'colorId' in event:
             if  event['colorId'] == "11":
                 suits = True
