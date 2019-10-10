@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # その日の予定を取得
 from __future__ import print_function
 import datetime
@@ -8,6 +9,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import requests
 import json
+from pytz import timezone
 
 # その日外出する時間帯（start -> end）の最高気温と、その時間帯に雨が降るか判断
 def get_weather(start,end):
@@ -24,8 +26,8 @@ def get_weather(start,end):
         forecastDatetime = timezone('Asia/Tokyo').localize(datetime.datetime.fromtimestamp(item['dt']))
         weatherDescription = item['weather'][0]['description']
         temperature = item['main']['temp']
-        #今日の東京の天気のうち外出中の天気情報のみ(雨が降るか/最高気温)を取得
-        if datetime.date.today().day == forecastDatetime.day:
+        # 今日の東京の天気のうち外出中の天気情報のみ(雨が降るか/最高気温)を取得
+        if forecastDatetime.day == datetime.date.today().day:
             if forecastDatetime.hour >= start and forecastDatetime.hour <= end:
                 if "雨" in weatherDescription:
                     rain = True
@@ -93,22 +95,53 @@ def get_calender():
 day_start_time,day_end_time,suits,official = get_calender()
 max_temp,rain = get_weather(day_start_time,day_end_time)
 
+# 結果に応じてつけるLEDを変える
+import RPi.GPIO as GPIO
+import time
+GPIO.setmode(GPIO.BOARD)
+
+# 傘のライトをつける
 if rain == True:
-    #傘ライトをつける
+    GPIO.setup(21,GPIO.OUT)
+    GPIO.output(21,True)
+
+# コートのライトをつける(LEDライト不足)
 if max_temp < 12:
-    #コートのライトをつける
+    # GPIO.setup(19,GPIO.OUT)
+    # GPIO.output(19,True)
+    print("LED増設します！")
+
+# スーツのライトをつける
 if suits == True:
-    #スーツライトをつける
+    GPIO.setup(11,GPIO.OUT)
+    GPIO.output(11,True)
 else:
-    #カジュアルパターン
+    # カジュアルパターン
     if suits == False and official == False:
+        # Tシャツとジーパンのライトをつける
         if max_temp >=21:
-            #Tシャツとジーパンのライトをつける
+            GPIO.setup(13,GPIO.OUT)
+            GPIO.output(13,True)
+            GPIO.setup(15,GPIO.OUT)
+            GPIO.output(15,True)
         else:
-            #長袖とパーカーとジーパンのライトをつける
-    #オフィシャルパターン
+            # 長袖(LED不足)とジーパンのライトをつける
+            GPIO.setup(15,GPIO.OUT)
+            GPIO.output(15,True)
+            #GPIO.setup(23,GPIO.OUT)
+            #GPIO.output(23,True)
+    #おしゃれパターン
     if suits == False and official == True:
         if max_temp >=21:
-            #ポロシャツとチノパンのライトをつける
+            # おしゃれな半袖服とチノパンのライトをつける（LED不足）
+            GPIO.setup(19,GPIO.OUT)
+            GPIO.output(19,True)
+            print("LED増設する")
         else:
-            #Yシャツとチノパンのライトをつける
+            # おしゃれなYシャツとチノパンをつける（どちらもLED不足）
+            # GPIO.setup(27,GPIO.OUT)
+            # GPIO.output(27,True)
+            print("LED増設する")
+
+time.sleep(10.0)
+GPIO.cleanup()
