@@ -22,6 +22,9 @@ https://www.youtube.com/watch?v=QWT_145FoyQ
   
     
 ### 写真
-![ラズパイ部分](https://github.com/seven0525/rasp_weather/tree/master/images/rasp_1.JPG)
+<img src="images/rasp_1.JPG" width=50%>
+
+<img src="images/rasp_2.JPG" width=50%>
+
 
 ### ラズパイコンテスト2019年に応募しました
